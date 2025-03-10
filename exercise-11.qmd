@@ -1,0 +1,288 @@
+---
+title: "Exercise 11: EDA, Normality, and Tidymodels on Air Quality Data"
+author: "Melissa May"
+date: "2025-03-07"
+format: html
+execute: 
+  echo: true
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+# Part 1: Normality Testing
+
+## Question 1:
+
+```{r}
+#Load the dataset:
+data("airquality")
+
+#Explore its structure:
+str(airquality)
+summary(airquality)
+```
+
+In this analysis, we will be working with the airquality dataset in R.
+The dataset contains daily air quality measurements from New York City,
+providing data on various air pollutants and weather variables. The
+columns in the dataset include ozone, solar radiation, wind,
+temperature, and the month and date on which the observation was taken.
+
+## Question 2:
+
+```{r}
+shapiro_ozone <- shapiro.test(na.omit(airquality$Ozone))
+shapiro_temp <- shapiro.test(na.omit(airquality$Temp))
+shapiro_solar <- shapiro.test(na.omit(airquality$Solar.R))
+shapiro_wind <- shapiro.test(na.omit(airquality$Wind))
+
+shapiro_ozone
+shapiro_temp
+shapiro_solar
+shapiro_wind
+```
+
+## Question 3:
+
+The purpose of a Shapiro-Wilk test is to determine whether or not a
+sample dataset is normally distributed. It is a hypothesis test, so it
+requires the formation of null and alternative hypotheses, the
+computation of a test statistic, comparing the test statistic with the
+critical value, etc.
+
+## Question 4:
+
+-   Null Hypothesis (H0): The data follows a normal distribution.
+-   Alternative Hypothesis (H1): The data does not follow a normal
+    distribution.
+
+## Question 5:
+
+The Shapiro-Wilk tests yield a variable called 'W' as well as the
+p-value. When a p-value is less than 0.05, we reject the null
+hypothesis, indicating the the data is not normally distributed. When a
+p-value is greater than (or equal to) 0.05, we fail to reject H0,
+meaning the data may be normally distributed.
+
+-   **Ozone**: p = 2.79e-08
+    -   p \< 0.05 -\> reject H0
+    -   Ozone is not normally distributed.
+-   **Temperature**: p = 0.009319
+    -   p \< 0.05 -\> reject H0
+    -   Temperature is not normally distributed.
+-   **Solar Radiation**: p = 9.492e-06
+    -   p \< 0.05 -\> reject H0
+    -   Solar Radiation is not normally distributed.
+-   **Wind Speed**: p = 0.1178
+    -   p \> 0.05 -\> FTR H0
+    -   Wind Speed may be normally distributed, although failing to
+        reject the null\
+        hypothesis does not confirm the alternative hypothesis.
+
+# Part 2: Data Transformation and Feature Engineering
+
+## Question 6:
+
+```{r}
+library(dplyr)
+
+airquality <- airquality %>%
+  mutate(Season = case_when(
+    Month %in% c(11, 12, 1) ~ "Winter",
+    Month %in% c(2, 3, 4) ~ "Spring",
+    Month %in% c(5, 6, 7) ~ "Summer",
+    Month %in% c(8, 9, 10) ~ "Fall"
+  ))
+```
+
+## Question 7:
+
+```{r}
+table(airquality$Season)
+```
+
+The air quality data, when sorted by season of observation, reveals that
+61 observations were taken in Fall, and 92 were taken in Summer.
+
+# Part 3: Data Pre-Processing
+
+## Question 8:
+
+```{r}
+library(tidymodels)
+
+airquality_recipe <- recipe(Ozone ~ Temp + Solar.R + Wind + Season, data = airquality) %>%
+  step_impute_mean(all_numeric_predictors()) %>%
+  step_normalize(all_numeric_predictors()) %>%
+  step_dummy(Season)
+```
+
+## Question 9:
+
+Normalizing data serves multiple purposes in the world of data analysis.
+It is important to standardize the scales of variables like temperature
+and wind speed that all have different units. Normalization ensures
+their different units don't contribute unequally to analysis. Data
+normalization is also important for improving model performance and
+allowing for better comparability and interpretation of results.
+
+## Question 10:
+
+In order to impute missing values with the mean, use the function:
+**step_impute_mean(all_numeric_predictors())**
+
+## Question 11:
+
+```{r}
+prepped_recipe <- prep(airquality_recipe)
+
+processed_data <- bake(prepped_recipe, new_data = airquality)
+
+head(processed_data)
+```
+
+## Question 12:
+
+It is necessary to both **prep()** and **bake()** the recipe as they
+both serve different purposes. **prep()** estimates the necessary
+parameters, like computing the mean for imputation. **bake()** actually
+applies the transformations to the dataset using the information that
+was stored using **prep()**. Without **prep()**, **bake()** wouldn't
+have the statistics it needs to normalize the data.
+
+# Part 4: Building a Linear Regression Model
+
+## Question 13:
+
+```{r}
+linear_model <- lm(Ozone ~ ., data = processed_data)
+
+summary(linear_model)
+```
+
+## Question 14:
+
+## Model Equation
+
+The fitted regression model is: Ozone = 39.815 + 16.376(\text{Temp}) +
+4.857(\text{Solar.R}) - 10.952(\text{Wind}) +
+3.988(\text{Season_Summer})
+
+## Coefficients
+
+**Intercept (39.815)**
+
+-   The expected Ozone level when all other predictors are at zero. This
+    is not directly interpretable in real-world terms.
+
+**Temperature (16.376, p \< 0.001)**
+
+-   A higher temperature is associated with higher Ozone levels. A
+    one-unit increase in temperature increases Ozone by 16.376 ppb on
+    average.
+-   Its p-value is lower than 0.001, meaning it's unlikely this effect
+    is due to random chance.
+
+**Solar Radiation (4.857, p = 0.0231)**
+
+-   A one-unit increase in normalized solar radiation is associated with
+    a 4.857 ppb increase in Ozone. The p-value of 0.0231 is
+    statistically significant.
+
+**Wind (-10.952, p \< 0.001)**
+
+-   Higher wind speeds reduce Ozone levels. A one-unit increase in wind
+    decreases Ozone by 10.952 ppb on average.
+-   Its p-value of 4.98e-06 is statistically significant.
+
+**Season_Summer (3.988, p = 0.3441)**
+
+-   Ozone levels are slightly higher in the summer (by 3.988 ppb), but
+    the effect is not statistically significant (p = 0.3441), meaning we
+    cannot confidently say season has an effect on Ozone levels.
+
+## R-Squared
+
+**Multiple R-Squared: 0.5964**
+
+-   59.64% of the variation in Ozone is explained by these predictors
+-   This suggests a moderate fit, with some variance remaining
+    unexplained.
+
+**Adjusted R-Squared: 0.5819**
+
+-   Since this value is close to the multiple R2, it suggests the model
+    is not overfitting.
+
+**F-Statistic: 41.01 (p \< 2.2e-16)**
+
+-   This tests whether a predictor is significantly associated with
+    Ozone.
+
+-   The very small p-value confirms that the model is statistically
+    significant.
+
+# Part 5: Model Diagnostics
+
+## Question 15:
+
+```{r}
+library(broom)
+
+augmented_data <- augment(linear_model, data = model.frame(linear_model))
+```
+
+## Question 16:
+
+```{r}
+library(ggplot2)
+library(ggpubr)
+
+residuals_data <- augmented_data$.resid
+
+fitted_values <- augmented_data$.fitted
+
+# Histogram of Residuals:
+p1 <- ggplot(augmented_data, aes(x = .resid)) +
+  geom_histogram(bins = 30, fill = "skyblue", color = "black") +
+  ggtitle("Histogram of Residuals") +
+  theme_minimal()
+
+# QQ Plot of Residuals:
+p2 <- ggplot(augmented_data, aes(sample = .resid)) +
+  stat_qq() +
+  stat_qq_line() +
+  ggtitle("QQ Plot of Residuals") +
+  theme_minimal()
+```
+
+## Question 17:
+
+```{r}
+ggarrange(p1, p2, ncol = 2, nrow = 1)
+```
+
+## Question 18:
+
+```{r}
+ggscatter(augmented_data, x = "Ozone", y = ".fitted",
+          add = "reg.line", conf.int = TRUE,
+          cor.coef = TRUE, cor.method = "spearman",
+          ellipse = TRUE) +
+  ggtitle("Actual vs. Predicted Ozone")
+```
+
+## Question 19:
+
+-   R = 0.83, which suggests a strong positive relationship between the
+    actual and predicted ozone values.
+
+-   p \< 2.2e-16 is extremely small, meaning the correlation is
+    statistically significant.
+
+While not perfect, this definitely seems to be a relatively strong
+model. There's clearly some variability that still needs to be accounted
+for that isn't currently in this model, but this is a decent start. To
+improve it, one could add more relevant predictors or investigate
+patterns in residuals for heteroscedasticity.
