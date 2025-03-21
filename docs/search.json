@@ -1,0 +1,163 @@
+[
+  {
+    "objectID": "exercise-11.html",
+    "href": "exercise-11.html",
+    "title": "Exercise 11: EDA, Normality, and Tidymodels on Air Quality Data",
+    "section": "",
+    "text": "#Load the dataset:\ndata(\"airquality\")\n\n#Explore its structure:\nstr(airquality)\n\n'data.frame':   153 obs. of  6 variables:\n $ Ozone  : int  41 36 12 18 NA 28 23 19 8 NA ...\n $ Solar.R: int  190 118 149 313 NA NA 299 99 19 194 ...\n $ Wind   : num  7.4 8 12.6 11.5 14.3 14.9 8.6 13.8 20.1 8.6 ...\n $ Temp   : int  67 72 74 62 56 66 65 59 61 69 ...\n $ Month  : int  5 5 5 5 5 5 5 5 5 5 ...\n $ Day    : int  1 2 3 4 5 6 7 8 9 10 ...\n\nsummary(airquality)\n\n     Ozone           Solar.R           Wind             Temp      \n Min.   :  1.00   Min.   :  7.0   Min.   : 1.700   Min.   :56.00  \n 1st Qu.: 18.00   1st Qu.:115.8   1st Qu.: 7.400   1st Qu.:72.00  \n Median : 31.50   Median :205.0   Median : 9.700   Median :79.00  \n Mean   : 42.13   Mean   :185.9   Mean   : 9.958   Mean   :77.88  \n 3rd Qu.: 63.25   3rd Qu.:258.8   3rd Qu.:11.500   3rd Qu.:85.00  \n Max.   :168.00   Max.   :334.0   Max.   :20.700   Max.   :97.00  \n NA's   :37       NA's   :7                                       \n     Month            Day      \n Min.   :5.000   Min.   : 1.0  \n 1st Qu.:6.000   1st Qu.: 8.0  \n Median :7.000   Median :16.0  \n Mean   :6.993   Mean   :15.8  \n 3rd Qu.:8.000   3rd Qu.:23.0  \n Max.   :9.000   Max.   :31.0  \n                               \n\n\nIn this analysis, we will be working with the airquality dataset in R. The dataset contains daily air quality measurements from New York City, providing data on various air pollutants and weather variables. The columns in the dataset include ozone, solar radiation, wind, temperature, and the month and date on which the observation was taken.\n\n\n\n\nshapiro_ozone &lt;- shapiro.test(na.omit(airquality$Ozone))\nshapiro_temp &lt;- shapiro.test(na.omit(airquality$Temp))\nshapiro_solar &lt;- shapiro.test(na.omit(airquality$Solar.R))\nshapiro_wind &lt;- shapiro.test(na.omit(airquality$Wind))\n\nshapiro_ozone\n\n\n    Shapiro-Wilk normality test\n\ndata:  na.omit(airquality$Ozone)\nW = 0.87867, p-value = 2.79e-08\n\nshapiro_temp\n\n\n    Shapiro-Wilk normality test\n\ndata:  na.omit(airquality$Temp)\nW = 0.97617, p-value = 0.009319\n\nshapiro_solar\n\n\n    Shapiro-Wilk normality test\n\ndata:  na.omit(airquality$Solar.R)\nW = 0.94183, p-value = 9.492e-06\n\nshapiro_wind\n\n\n    Shapiro-Wilk normality test\n\ndata:  na.omit(airquality$Wind)\nW = 0.98575, p-value = 0.1178\n\n\n\n\n\nThe purpose of a Shapiro-Wilk test is to determine whether or not a sample dataset is normally distributed. It is a hypothesis test, so it requires the formation of null and alternative hypotheses, the computation of a test statistic, comparing the test statistic with the critical value, etc.\n\n\n\n\nNull Hypothesis (H0): The data follows a normal distribution.\nAlternative Hypothesis (H1): The data does not follow a normal distribution.\n\n\n\n\nThe Shapiro-Wilk tests yield a variable called ‘W’ as well as the p-value. When a p-value is less than 0.05, we reject the null hypothesis, indicating the the data is not normally distributed. When a p-value is greater than (or equal to) 0.05, we fail to reject H0, meaning the data may be normally distributed.\n\nOzone: p = 2.79e-08\n\np &lt; 0.05 -&gt; reject H0\nOzone is not normally distributed.\n\nTemperature: p = 0.009319\n\np &lt; 0.05 -&gt; reject H0\nTemperature is not normally distributed.\n\nSolar Radiation: p = 9.492e-06\n\np &lt; 0.05 -&gt; reject H0\nSolar Radiation is not normally distributed.\n\nWind Speed: p = 0.1178\n\np &gt; 0.05 -&gt; FTR H0\nWind Speed may be normally distributed, although failing to reject the null\nhypothesis does not confirm the alternative hypothesis."
+  },
+  {
+    "objectID": "exercise-11.html#question-1",
+    "href": "exercise-11.html#question-1",
+    "title": "Exercise 11: EDA, Normality, and Tidymodels on Air Quality Data",
+    "section": "",
+    "text": "#Load the dataset:\ndata(\"airquality\")\n\n#Explore its structure:\nstr(airquality)\n\n'data.frame':   153 obs. of  6 variables:\n $ Ozone  : int  41 36 12 18 NA 28 23 19 8 NA ...\n $ Solar.R: int  190 118 149 313 NA NA 299 99 19 194 ...\n $ Wind   : num  7.4 8 12.6 11.5 14.3 14.9 8.6 13.8 20.1 8.6 ...\n $ Temp   : int  67 72 74 62 56 66 65 59 61 69 ...\n $ Month  : int  5 5 5 5 5 5 5 5 5 5 ...\n $ Day    : int  1 2 3 4 5 6 7 8 9 10 ...\n\nsummary(airquality)\n\n     Ozone           Solar.R           Wind             Temp      \n Min.   :  1.00   Min.   :  7.0   Min.   : 1.700   Min.   :56.00  \n 1st Qu.: 18.00   1st Qu.:115.8   1st Qu.: 7.400   1st Qu.:72.00  \n Median : 31.50   Median :205.0   Median : 9.700   Median :79.00  \n Mean   : 42.13   Mean   :185.9   Mean   : 9.958   Mean   :77.88  \n 3rd Qu.: 63.25   3rd Qu.:258.8   3rd Qu.:11.500   3rd Qu.:85.00  \n Max.   :168.00   Max.   :334.0   Max.   :20.700   Max.   :97.00  \n NA's   :37       NA's   :7                                       \n     Month            Day      \n Min.   :5.000   Min.   : 1.0  \n 1st Qu.:6.000   1st Qu.: 8.0  \n Median :7.000   Median :16.0  \n Mean   :6.993   Mean   :15.8  \n 3rd Qu.:8.000   3rd Qu.:23.0  \n Max.   :9.000   Max.   :31.0  \n                               \n\n\nIn this analysis, we will be working with the airquality dataset in R. The dataset contains daily air quality measurements from New York City, providing data on various air pollutants and weather variables. The columns in the dataset include ozone, solar radiation, wind, temperature, and the month and date on which the observation was taken."
+  },
+  {
+    "objectID": "exercise-11.html#question-2",
+    "href": "exercise-11.html#question-2",
+    "title": "Exercise 11: EDA, Normality, and Tidymodels on Air Quality Data",
+    "section": "",
+    "text": "shapiro_ozone &lt;- shapiro.test(na.omit(airquality$Ozone))\nshapiro_temp &lt;- shapiro.test(na.omit(airquality$Temp))\nshapiro_solar &lt;- shapiro.test(na.omit(airquality$Solar.R))\nshapiro_wind &lt;- shapiro.test(na.omit(airquality$Wind))\n\nshapiro_ozone\n\n\n    Shapiro-Wilk normality test\n\ndata:  na.omit(airquality$Ozone)\nW = 0.87867, p-value = 2.79e-08\n\nshapiro_temp\n\n\n    Shapiro-Wilk normality test\n\ndata:  na.omit(airquality$Temp)\nW = 0.97617, p-value = 0.009319\n\nshapiro_solar\n\n\n    Shapiro-Wilk normality test\n\ndata:  na.omit(airquality$Solar.R)\nW = 0.94183, p-value = 9.492e-06\n\nshapiro_wind\n\n\n    Shapiro-Wilk normality test\n\ndata:  na.omit(airquality$Wind)\nW = 0.98575, p-value = 0.1178"
+  },
+  {
+    "objectID": "exercise-11.html#question-3",
+    "href": "exercise-11.html#question-3",
+    "title": "Exercise 11: EDA, Normality, and Tidymodels on Air Quality Data",
+    "section": "",
+    "text": "The purpose of a Shapiro-Wilk test is to determine whether or not a sample dataset is normally distributed. It is a hypothesis test, so it requires the formation of null and alternative hypotheses, the computation of a test statistic, comparing the test statistic with the critical value, etc."
+  },
+  {
+    "objectID": "exercise-11.html#question-4",
+    "href": "exercise-11.html#question-4",
+    "title": "Exercise 11: EDA, Normality, and Tidymodels on Air Quality Data",
+    "section": "",
+    "text": "Null Hypothesis (H0): The data follows a normal distribution.\nAlternative Hypothesis (H1): The data does not follow a normal distribution."
+  },
+  {
+    "objectID": "exercise-11.html#question-5",
+    "href": "exercise-11.html#question-5",
+    "title": "Exercise 11: EDA, Normality, and Tidymodels on Air Quality Data",
+    "section": "",
+    "text": "The Shapiro-Wilk tests yield a variable called ‘W’ as well as the p-value. When a p-value is less than 0.05, we reject the null hypothesis, indicating the the data is not normally distributed. When a p-value is greater than (or equal to) 0.05, we fail to reject H0, meaning the data may be normally distributed.\n\nOzone: p = 2.79e-08\n\np &lt; 0.05 -&gt; reject H0\nOzone is not normally distributed.\n\nTemperature: p = 0.009319\n\np &lt; 0.05 -&gt; reject H0\nTemperature is not normally distributed.\n\nSolar Radiation: p = 9.492e-06\n\np &lt; 0.05 -&gt; reject H0\nSolar Radiation is not normally distributed.\n\nWind Speed: p = 0.1178\n\np &gt; 0.05 -&gt; FTR H0\nWind Speed may be normally distributed, although failing to reject the null\nhypothesis does not confirm the alternative hypothesis."
+  },
+  {
+    "objectID": "exercise-11.html#question-6",
+    "href": "exercise-11.html#question-6",
+    "title": "Exercise 11: EDA, Normality, and Tidymodels on Air Quality Data",
+    "section": "Question 6:",
+    "text": "Question 6:\n\nlibrary(dplyr)\n\n\nAttaching package: 'dplyr'\n\n\nThe following objects are masked from 'package:stats':\n\n    filter, lag\n\n\nThe following objects are masked from 'package:base':\n\n    intersect, setdiff, setequal, union\n\nairquality &lt;- airquality %&gt;%\n  mutate(Season = case_when(\n    Month %in% c(11, 12, 1) ~ \"Winter\",\n    Month %in% c(2, 3, 4) ~ \"Spring\",\n    Month %in% c(5, 6, 7) ~ \"Summer\",\n    Month %in% c(8, 9, 10) ~ \"Fall\"\n  ))"
+  },
+  {
+    "objectID": "exercise-11.html#question-7",
+    "href": "exercise-11.html#question-7",
+    "title": "Exercise 11: EDA, Normality, and Tidymodels on Air Quality Data",
+    "section": "Question 7:",
+    "text": "Question 7:\n\ntable(airquality$Season)\n\n\n  Fall Summer \n    61     92 \n\n\nThe air quality data, when sorted by season of observation, reveals that 61 observations were taken in Fall, and 92 were taken in Summer."
+  },
+  {
+    "objectID": "exercise-11.html#question-8",
+    "href": "exercise-11.html#question-8",
+    "title": "Exercise 11: EDA, Normality, and Tidymodels on Air Quality Data",
+    "section": "Question 8:",
+    "text": "Question 8:\n\nlibrary(tidymodels)\n\n── Attaching packages ────────────────────────────────────── tidymodels 1.2.0 ──\n\n\n✔ broom        1.0.7     ✔ rsample      1.2.1\n✔ dials        1.3.0     ✔ tibble       3.2.1\n✔ ggplot2      3.5.1     ✔ tidyr        1.3.1\n✔ infer        1.0.7     ✔ tune         1.2.1\n✔ modeldata    1.4.0     ✔ workflows    1.1.4\n✔ parsnip      1.2.1     ✔ workflowsets 1.1.0\n✔ purrr        1.0.2     ✔ yardstick    1.3.1\n✔ recipes      1.1.0     \n\n\n── Conflicts ───────────────────────────────────────── tidymodels_conflicts() ──\n✖ purrr::discard() masks scales::discard()\n✖ dplyr::filter()  masks stats::filter()\n✖ dplyr::lag()     masks stats::lag()\n✖ recipes::step()  masks stats::step()\n• Search for functions across packages at https://www.tidymodels.org/find/\n\nairquality_recipe &lt;- recipe(Ozone ~ Temp + Solar.R + Wind + Season, data = airquality) %&gt;%\n  step_impute_mean(all_numeric_predictors()) %&gt;%\n  step_normalize(all_numeric_predictors()) %&gt;%\n  step_dummy(Season)"
+  },
+  {
+    "objectID": "exercise-11.html#question-9",
+    "href": "exercise-11.html#question-9",
+    "title": "Exercise 11: EDA, Normality, and Tidymodels on Air Quality Data",
+    "section": "Question 9:",
+    "text": "Question 9:\nNormalizing data serves multiple purposes in the world of data analysis. It is important to standardize the scales of variables like temperature and wind speed that all have different units. Normalization ensures their different units don’t contribute unequally to analysis. Data normalization is also important for improving model performance and allowing for better comparability and interpretation of results."
+  },
+  {
+    "objectID": "exercise-11.html#question-10",
+    "href": "exercise-11.html#question-10",
+    "title": "Exercise 11: EDA, Normality, and Tidymodels on Air Quality Data",
+    "section": "Question 10:",
+    "text": "Question 10:\nIn order to impute missing values with the mean, use the function: step_impute_mean(all_numeric_predictors())"
+  },
+  {
+    "objectID": "exercise-11.html#question-11",
+    "href": "exercise-11.html#question-11",
+    "title": "Exercise 11: EDA, Normality, and Tidymodels on Air Quality Data",
+    "section": "Question 11:",
+    "text": "Question 11:\n\nprepped_recipe &lt;- prep(airquality_recipe)\n\nprocessed_data &lt;- bake(prepped_recipe, new_data = airquality)\n\nhead(processed_data)\n\n# A tibble: 6 × 5\n    Temp   Solar.R   Wind Ozone Season_Summer\n   &lt;dbl&gt;     &lt;dbl&gt;  &lt;dbl&gt; &lt;int&gt;         &lt;dbl&gt;\n1 -1.15   0.0462   -0.726    41             1\n2 -0.621 -0.772    -0.556    36             1\n3 -0.410 -0.420     0.750    12             1\n4 -1.68   1.44      0.438    18             1\n5 -2.31   0.000743  1.23     NA             1\n6 -1.26   0.000743  1.40     28             1"
+  },
+  {
+    "objectID": "exercise-11.html#question-12",
+    "href": "exercise-11.html#question-12",
+    "title": "Exercise 11: EDA, Normality, and Tidymodels on Air Quality Data",
+    "section": "Question 12:",
+    "text": "Question 12:\nIt is necessary to both prep() and bake() the recipe as they both serve different purposes. prep() estimates the necessary parameters, like computing the mean for imputation. bake() actually applies the transformations to the dataset using the information that was stored using prep(). Without prep(), bake() wouldn’t have the statistics it needs to normalize the data."
+  },
+  {
+    "objectID": "exercise-11.html#question-13",
+    "href": "exercise-11.html#question-13",
+    "title": "Exercise 11: EDA, Normality, and Tidymodels on Air Quality Data",
+    "section": "Question 13:",
+    "text": "Question 13:\n\nlinear_model &lt;- lm(Ozone ~ ., data = processed_data)\n\nsummary(linear_model)\n\n\nCall:\nlm(formula = Ozone ~ ., data = processed_data)\n\nResiduals:\n    Min      1Q  Median      3Q     Max \n-39.595 -14.802  -2.437  10.510  99.531 \n\nCoefficients:\n              Estimate Std. Error t value Pr(&gt;|t|)    \n(Intercept)     39.815      2.970  13.405  &lt; 2e-16 ***\nTemp            16.376      2.477   6.612 1.38e-09 ***\nSolar.R          4.857      2.108   2.304   0.0231 *  \nWind           -10.952      2.282  -4.800 4.98e-06 ***\nSeason_Summer    3.988      4.197   0.950   0.3441    \n---\nSignif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n\nResidual standard error: 21.33 on 111 degrees of freedom\n  (37 observations deleted due to missingness)\nMultiple R-squared:  0.5964,    Adjusted R-squared:  0.5819 \nF-statistic: 41.01 on 4 and 111 DF,  p-value: &lt; 2.2e-16"
+  },
+  {
+    "objectID": "exercise-11.html#question-14",
+    "href": "exercise-11.html#question-14",
+    "title": "Exercise 11: EDA, Normality, and Tidymodels on Air Quality Data",
+    "section": "Question 14:",
+    "text": "Question 14:"
+  },
+  {
+    "objectID": "exercise-11.html#model-equation",
+    "href": "exercise-11.html#model-equation",
+    "title": "Exercise 11: EDA, Normality, and Tidymodels on Air Quality Data",
+    "section": "Model Equation",
+    "text": "Model Equation\nThe fitted regression model is: Ozone = 39.815 + 16.376() + 4.857() - 10.952() + 3.988()"
+  },
+  {
+    "objectID": "exercise-11.html#coefficients",
+    "href": "exercise-11.html#coefficients",
+    "title": "Exercise 11: EDA, Normality, and Tidymodels on Air Quality Data",
+    "section": "Coefficients",
+    "text": "Coefficients\nIntercept (39.815)\n\nThe expected Ozone level when all other predictors are at zero. This is not directly interpretable in real-world terms.\n\nTemperature (16.376, p &lt; 0.001)\n\nA higher temperature is associated with higher Ozone levels. A one-unit increase in temperature increases Ozone by 16.376 ppb on average.\nIts p-value is lower than 0.001, meaning it’s unlikely this effect is due to random chance.\n\nSolar Radiation (4.857, p = 0.0231)\n\nA one-unit increase in normalized solar radiation is associated with a 4.857 ppb increase in Ozone. The p-value of 0.0231 is statistically significant.\n\nWind (-10.952, p &lt; 0.001)\n\nHigher wind speeds reduce Ozone levels. A one-unit increase in wind decreases Ozone by 10.952 ppb on average.\nIts p-value of 4.98e-06 is statistically significant.\n\nSeason_Summer (3.988, p = 0.3441)\n\nOzone levels are slightly higher in the summer (by 3.988 ppb), but the effect is not statistically significant (p = 0.3441), meaning we cannot confidently say season has an effect on Ozone levels."
+  },
+  {
+    "objectID": "exercise-11.html#r-squared",
+    "href": "exercise-11.html#r-squared",
+    "title": "Exercise 11: EDA, Normality, and Tidymodels on Air Quality Data",
+    "section": "R-Squared",
+    "text": "R-Squared\nMultiple R-Squared: 0.5964\n\n59.64% of the variation in Ozone is explained by these predictors\nThis suggests a moderate fit, with some variance remaining unexplained.\n\nAdjusted R-Squared: 0.5819\n\nSince this value is close to the multiple R2, it suggests the model is not overfitting.\n\nF-Statistic: 41.01 (p &lt; 2.2e-16)\n\nThis tests whether a predictor is significantly associated with Ozone.\nThe very small p-value confirms that the model is statistically significant."
+  },
+  {
+    "objectID": "exercise-11.html#question-15",
+    "href": "exercise-11.html#question-15",
+    "title": "Exercise 11: EDA, Normality, and Tidymodels on Air Quality Data",
+    "section": "Question 15:",
+    "text": "Question 15:\n\nlibrary(broom)\n\naugmented_data &lt;- augment(linear_model, data = model.frame(linear_model))"
+  },
+  {
+    "objectID": "exercise-11.html#question-16",
+    "href": "exercise-11.html#question-16",
+    "title": "Exercise 11: EDA, Normality, and Tidymodels on Air Quality Data",
+    "section": "Question 16:",
+    "text": "Question 16:\n\nlibrary(ggplot2)\nlibrary(ggpubr)\n\nWarning: package 'ggpubr' was built under R version 4.4.3\n\nresiduals_data &lt;- augmented_data$.resid\n\nfitted_values &lt;- augmented_data$.fitted\n\n# Histogram of Residuals:\np1 &lt;- ggplot(augmented_data, aes(x = .resid)) +\n  geom_histogram(bins = 30, fill = \"skyblue\", color = \"black\") +\n  ggtitle(\"Histogram of Residuals\") +\n  theme_minimal()\n\n# QQ Plot of Residuals:\np2 &lt;- ggplot(augmented_data, aes(sample = .resid)) +\n  stat_qq() +\n  stat_qq_line() +\n  ggtitle(\"QQ Plot of Residuals\") +\n  theme_minimal()"
+  },
+  {
+    "objectID": "exercise-11.html#question-17",
+    "href": "exercise-11.html#question-17",
+    "title": "Exercise 11: EDA, Normality, and Tidymodels on Air Quality Data",
+    "section": "Question 17:",
+    "text": "Question 17:\n\nggarrange(p1, p2, ncol = 2, nrow = 1)"
+  },
+  {
+    "objectID": "exercise-11.html#question-18",
+    "href": "exercise-11.html#question-18",
+    "title": "Exercise 11: EDA, Normality, and Tidymodels on Air Quality Data",
+    "section": "Question 18:",
+    "text": "Question 18:\n\nggscatter(augmented_data, x = \"Ozone\", y = \".fitted\",\n          add = \"reg.line\", conf.int = TRUE,\n          cor.coef = TRUE, cor.method = \"spearman\",\n          ellipse = TRUE) +\n  ggtitle(\"Actual vs. Predicted Ozone\")"
+  },
+  {
+    "objectID": "exercise-11.html#question-19",
+    "href": "exercise-11.html#question-19",
+    "title": "Exercise 11: EDA, Normality, and Tidymodels on Air Quality Data",
+    "section": "Question 19:",
+    "text": "Question 19:\n\nR = 0.83, which suggests a strong positive relationship between the actual and predicted ozone values.\np &lt; 2.2e-16 is extremely small, meaning the correlation is statistically significant.\n\nWhile not perfect, this definitely seems to be a relatively strong model. There’s clearly some variability that still needs to be accounted for that isn’t currently in this model, but this is a decent start. To improve it, one could add more relevant predictors or investigate patterns in residuals for heteroscedasticity."
+  }
+]
