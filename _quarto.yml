@@ -1,11 +1,9 @@
 project: 
-  title: "Exercise #11/12: EDA, Normality, and Tidymodels on Air Quality Data"
-  subtitle: "Ecosystem Science & Sustainability 330""
-  author:
-    - name: Melissa May
-      email: melmay@colostate.edu
-  output-dir: docs
   type: website
+  output-dir: docs
+
+title: "Exercise #11/12: EDA, Normality, and Tidymodels on Air Quality Data"
+author: "Melissa May"
 
 format:
   html:
